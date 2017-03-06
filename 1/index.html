@@ -151,7 +151,7 @@ run = () => {
       dist = Math.hypot(intersections[0][0] - x1, intersections[0][1] - y1);
       c2.fillRect(
         column * 5,
-        column_top = Math.min(((dist / 600) * 200), 200) /* * (1 + Math.sin(column / 100 * 3.14) / 4)*/,
+        column_top = 200 - 20000 / dist /* * (1 + Math.sin(column / 100 * 3.14) / 4)*/,
         10,
         400 - 2 * column_top);
       
