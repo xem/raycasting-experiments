@@ -27,14 +27,15 @@ map = [
   [0,0,0,0,0,0]
 ];
 
+// Camera angle (rad)
 angle = -1;
 
-run = () => {
+// Render both canvas
+render = () => {
 
+  // Reset canvas
   a1.width ^= 0;
   a2.width ^= 0;
-  
-  a1.fillStyle = "black";
   
   // TOP VIEW
 
@@ -89,34 +90,30 @@ run = () => {
     c1.moveTo(x1 = camera[0] * 100, y1 = camera[1] * 100);
     c1.lineTo(x2 = camera[0] * 100 + Math.cos(i) * 1000, y2 = camera[1] * 100 + Math.sin(i) * 1000);
     
-    // Line equation: ax+b
-    // Director coefficient a
+    // Line equation: y = a * x + b
+    // a: director coefficient
     a = (y2 - y1) / (x2 - x1);
     
-    // y at the origin b
+    // b: y at the origin
     b = y1 - a * x1;
     
     intersections = [];
 
-    // Intersections with vertical lines (x = i, so  y = a * i + b)
+    // Intersections with vertical lines (x = j, so  y = a * j + b)
     for(j = 0; j <= 600; j += 100){
       if((j < x1 && x2 < x1) || (j > x1 && x2 > x1)){
         
         x = j;
         y = a * j + b;
-        //c1.fillStyle = "red";
-        //c1.fillRect(x - 2, y - 2, 4, 4);
         
         // Only intersections with walls (on the left or on the right)
-        if(map[~~(y/100)] && (map[~~(y/100)][x/100 - 1] || map[~~(y/100)][x/100])){
-          //c1.fillStyle = "blue";
-          //c1.fillRect(x - 3, y - 3, 6, 6);
+        if(map[~~(y / 100)] && (map[~~(y / 100)][x / 100 - 1] || map[~~(y / 100)][x / 100])){
           intersections.push([x, y]);
         }
       }
     }
     
-    // intersections with horizontal lines (y = i, so x = (i - b) / a)
+    // intersections with horizontal lines (y = j, so x = (j - b) / a)
     for(j = 0; j <= 500; j += 100){
       
       // Only intersections in the good direction
@@ -124,34 +121,30 @@ run = () => {
         
         x = (j - b) / a;
         y = j;
-        //c1.fillStyle = "red";
-        //c1.fillRect(x - 2, y - 2, 4, 4);
         
         // Only intersections with walls (on top or bottom)
         if((map[(j/100)-1] && map[(j/100)-1][~~(x/100)]) || (map[j/100] && map[j/100][~~(x/100)])){
-          //c1.fillStyle = "blue";
-          //c1.fillRect(x - 3, y - 3, 6, 6);
           intersections.push([x, y]);
         }
       }
     }
     
-    // Sort intersections with walls
+    // Sort intersections with walls from closest to furthest
     intersections = intersections.sort((a,b)=>{
       return Math.hypot(a[0] - x1, a[1] - y1) - Math.hypot(b[0] - x1, b[1] - y1)
     });
     
-    // Show nearest
+    // Show nearest intersection with a wall in green
     c1.fillStyle = "green";
     if(intersections.length){
-      c1.fillRect(intersections[0][0] - 4, intersections[0][1] - 4, 8, 8);
+      c1.fillRect(intersections[0][0] - 2, intersections[0][1] - 2, 4, 4);
       
-      // Show nearest in the 3D view, /*cancel fisheye effect*/
+      // Draw column in 3D view according to the distance from camera to closest wall
       c2.fillStyle = "black";
       dist = Math.hypot(intersections[0][0] - x1, intersections[0][1] - y1);
       c2.fillRect(
         column * 5,
-        column_top = 200 - 20000 / dist /* * (1 + Math.sin(column / 100 * 3.14) / 4)*/,
+        column_top = 200 - 20000 / dist,
         10,
         400 - 2 * column_top);
       
@@ -161,16 +154,21 @@ run = () => {
   c1.closePath();
 }
 
-run();
+render();
 
+// Handle mouse
 click = 0;
 last_x = 500;
 a1.onmousedown = e => { click = 1; last_x = e.pageX - 20; }
 a1.onmouseup = e => { click = 0; }
 a1.onmousemove = e => {
-  if(!click){camera = [(e.pageX - 20) / 100, (e.pageY - 40)/100];}
-  else if(last_x - e.pageX + 20 != 0) { angle += ((last_x - e.pageX + 20) > 0 ? -1 : 1) * 0.05; last_x = e.pageX - 20; }
-  run();
+  if(!click){
+    camera = [(e.pageX - 20) / 100, (e.pageY - 40)/100];
+  }
+  else if(last_x - e.pageX + 20 != 0){
+    angle += ((last_x - e.pageX + 20) > 0 ? -1 : 1) * 0.05; last_x = e.pageX - 20;
+  }
+  render();
 }
 
 </script>
