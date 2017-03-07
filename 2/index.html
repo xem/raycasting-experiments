@@ -1,0 +1,204 @@
+<!doctype html>
+<meta charset=utf-8>
+<div style="float:left; margin: 0 10px 0 0">
+Top view (move camera with mouse, rotate camera with click & drag)
+<br>
+<canvas width=600 height=500 id=a1></canvas>
+</div>
+
+3D view
+<br>
+<canvas width=600 height=400 id=a2></canvas>
+<br>
+
+<script>
+// Canvas contexts
+c1 = a1.getContext("2d");
+c2 = a2.getContext("2d");
+
+// Map
+
+map = [
+  [0,0,0,0,0,0],
+  [0,0,1,0,0,0],
+  [0,0,0,0,1,0],
+  [0,0,0,0,0,0],
+  [0,0,0,0,0,0]
+];
+
+// Camera position and angle (rad)
+camera = [1.5, 3.5];
+angle = -1;
+
+// Render both canvas
+render = () => {
+
+  // Reset canvas
+  a1.width ^= 0;
+  a2.width ^= 0;
+  
+  // TOP VIEW
+
+  // Grid
+  c1.beginPath();
+  for(i = 0; i <= 600; i+= 100){
+    c1.moveTo(i, 0);
+    c1.lineTo(i, 500);
+  }
+  for(i = 0; i <= 500; i+= 100){
+    c1.moveTo(0, i);
+    c1.lineTo(600, i);
+  }
+  c1.stroke();
+  c1.closePath();
+
+  // Walls
+  for(i in map){
+    for(j in map[i]){
+      if(map[i][j]){
+        c1.fillRect(j * 100, i * 100, 100, 100);
+      }
+    }
+  }
+
+  // Camera
+  c1.beginPath();
+  c1.arc(camera [0] * 100, camera [1] * 100, 5, 0, 7);
+  c1.fill();
+  c1.closePath();
+
+  // 3D VIEW
+
+  // Grid
+  c2.beginPath();
+  for(i = 0; i <= 120; i++){
+    c2.moveTo(i * 5, 0);
+    c2.lineTo(i * 5, 500);
+  }
+  
+  c2.moveTo(0, 200);
+  c2.lineTo(600, 200);
+  c2.moveTo(0, 0);
+  c2.lineTo(600, 0);
+  c2.moveTo(0, 400);
+  c2.lineTo(600, 400);
+  c2.stroke();
+  c2.closePath();
+
+  // RAYCASTING
+
+  c1.beginPath();
+  column = 0;
+  
+  // Draw a screen in front of the camera
+  c1.moveTo(xs1 = camera[0] * 100 + Math.cos(angle - 0.7) * 50, ys1 = camera[1] * 100 + Math.sin(angle - 0.7) * 50);
+  c1.lineTo(xs2 = camera[0] * 100 + Math.cos(angle + 0.7) * 50, ys2 = camera[1] * 100 + Math.sin(angle + 0.7) * 50);
+  
+  // Screen's line equation: y = as * x + bs
+  // as: director coefficient
+  as = (ys2 - ys1) / (xs2 - xs1);
+  
+  // bs: y at the origin
+  bs = ys1 - as * xs1;
+  
+  for(i = angle - 0.7; i < angle + 0.7; i += 1.4 / 60, column++){
+    
+    // Draw
+    c1.moveTo(x1 = camera[0] * 100, y1 = camera[1] * 100);
+    c1.lineTo(x2 = camera[0] * 100 + Math.cos(i) * 1000, y2 = camera[1] * 100 + Math.sin(i) * 1000);
+    
+    // Ray's line equation: y = a * x + b
+    // a: director coefficient
+    a = (y2 - y1) / (x2 - x1);
+    
+    // b: y at the origin
+    b = y1 - a * x1;
+    
+    // Intersection between ray and screen
+    // yi = as * xi + bs
+    // yi = a * xi + b
+    // => as * xi + bs = a * xi + b
+    // => as * xi - a * xi = b - bs 
+    // => (as - a) * xi = b - bs
+    // => xi = (b - bs) / (as - a);
+    xi = (b - bs) / (as - a);
+    
+    // To find yi, just place xi in one of the two equations
+    yi = as * xi + bs;
+    
+    // Intersections between rays and walls
+    intersections = [];
+
+    // Intersections with vertical lines (x = j, so  y = a * j + b)
+    for(j = 0; j <= 600; j += 100){
+      if((j < x1 && x2 < x1) || (j > x1 && x2 > x1)){
+        
+        x = j;
+        y = a * j + b;
+        
+        // Only intersections with walls (on the left or on the right)
+        if(map[~~(y / 100)] && (map[~~(y / 100)][x / 100 - 1] || map[~~(y / 100)][x / 100])){
+          intersections.push([x, y]);
+        }
+      }
+    }
+    
+    // intersections with horizontal lines (y = j, so x = (j - b) / a)
+    for(j = 0; j <= 500; j += 100){
+      
+      // Only intersections in the good direction
+      if((j < y1 && y2 < y1) || (j > y1 && y2 > y1)){
+        
+        x = (j - b) / a;
+        y = j;
+        
+        // Only intersections with walls (on top or bottom)
+        if((map[(j / 100) - 1] && map[(j / 100) - 1][~~(x / 100)]) || (map[j / 100] && map[j / 100][~~(x / 100)])){
+          intersections.push([x, y]);
+        }
+      }
+    }
+    
+    // Sort intersections with walls from closest to furthest
+    intersections = intersections.sort((a,b) => {
+      return Math.hypot(a[0] - x1, a[1] - y1) - Math.hypot(b[0] - x1, b[1] - y1)
+    });
+    
+    // Show nearest intersection with a wall in green
+    c1.fillStyle = "green";
+    if(intersections.length){
+      c1.fillRect(intersections[0][0] - 2, intersections[0][1] - 2, 4, 4);
+      
+      // Draw column in 3D view according to the distance from camera to green square minus distance between camera and screen
+      c2.fillStyle = "black";
+      dist = Math.hypot(intersections[0][0] - x1, intersections[0][1] - y1) - Math.hypot(xi - x1, yi - y1);
+      c2.fillRect(
+        column * 10,
+        column_top = 200 - 10000 / dist,
+        20,
+        400 - 2 * column_top);
+      
+    }
+  }
+  c1.stroke();
+  c1.closePath();
+}
+
+render();
+
+// Handle mouse
+click = 0;
+last_x = 500;
+a1.onmousedown = e => { click = 1; last_x = e.pageX - 10; }
+onmouseup = e => { click = 0; }
+a1.onmousemove = e => {
+  if(!click){
+    camera = [(e.pageX - 10) / 100, (e.pageY - 25)/100];
+  }
+  else if(last_x - e.pageX + 10 != 0){
+    angle += ((last_x - e.pageX + 10) > 0 ? -1 : 1) * 0.05; last_x = e.pageX - 10;
+  }
+  render();
+}
+
+</script>
