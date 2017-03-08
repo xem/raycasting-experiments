@@ -133,13 +133,13 @@ render = () => {
   c1.beginPath();
   column = 0;
   
-  rays = calculate_ray_directions(120, [camera[0] * 100 + 400, camera[1] * 100], 90);
+  rays = calculate_ray_directions(120, [camera[0]*100 + 400, camera[1] * 100 + 400], 90);
   
   //console.log(rays);
   for(i in rays){
   
     c1.moveTo(x1 = camera[0] * 100, y1 = camera[1] * 100);
-    c1.lineTo(x2 = rays[i][0], y2 = rays[i][1]);
+    c1.lineTo(x2 = camera[0] * 100 + rays[i][0], y2 = camera[1] * 100 + rays[i][1]);
     
     /*
     // Draw
