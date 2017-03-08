@@ -91,8 +91,8 @@ render = () => {
   column = 0;
   
   // Draw a screen in front of the camera
-  c1.moveTo(xs1 = camera[0] * 100 + Math.cos(angle - 0.7) * 50, ys1 = camera[1] * 100 + Math.sin(angle - 0.7) * 50);
-  c1.lineTo(xs2 = camera[0] * 100 + Math.cos(angle + 0.7) * 50, ys2 = camera[1] * 100 + Math.sin(angle + 0.7) * 50);
+  c1.moveTo(xs1 = camera[0] * 100 + Math.cos(angle - 0.5) * 10, ys1 = camera[1] * 100 + Math.sin(angle - 0.5) * 10);
+  c1.lineTo(xs2 = camera[0] * 100 + Math.cos(angle + 0.5) * 10, ys2 = camera[1] * 100 + Math.sin(angle + 0.5) * 10);
   
   // Screen's line equation: y = as * x + bs
   // as: director coefficient
