@@ -12,49 +12,6 @@ Top view (move camera with mouse, rotate camera with click & drag)
 <br>
 
 <script>
-
-// ============= Magic code by Anders Kaare ============
-
-function dot(a, b) {
-  return [a[0]*b[0] + a[1]*b[1]];
-}
-
-function add(a, b) {
-  return [a[0]+b[0], a[1]+b[1]];
-}
-
-function sub(a, b) {
-  return [a[0]-b[0], a[1]-b[1]];
-}
-
-function cross(a) {
-  return [-a[1], a[0]]
-}
-
-function scale(v, scalar) {
-  return [v[0] * scalar, v[1] * scalar];
-}
-
-// for each intersection use column_height = base_height / projected_distance(...)
-function projected_distance(eye_position, intersection_point, view_direction) {
-   return dot(view_direction, sub(intersection_point, eye_position));
-}
-
-// e.g. if your width is 320px, and you want a 90° FOV (field of view), call with calculate_ray_directions(320, view_direction, 90);
-function calculate_ray_directions(n_columns, view_direction, fov_degrees) {
-  var fov_radians = (fov_degrees / 180) * Math.PI;
-  var view_plane = scale(cross(view_direction), Math.tan(fov_radians/2));
-  var rays = [];
-  for (var i = 0; i < n_columns; i++) {
-    var s = (i/n_columns)*2-1; // squash into [-1;1] range
-    var ray = add(view_direction, scale(view_plane, s));
-    rays.push(ray);
-  }
-  return rays;
-}
-
-// =================================================
-
 // Canvas contexts
 c1 = a1.getContext("2d");
 c2 = a2.getContext("2d");
@@ -133,15 +90,19 @@ render = () => {
   c1.beginPath();
   column = 0;
   
-  rays = calculate_ray_directions(120, [camera[0]*100 + 400, camera[1] * 100 + 400], 90);
+  // Draw a screen in front of the camera
+  c1.moveTo(xs1 = camera[0] * 100 + Math.cos(angle - 0.7) * 50, ys1 = camera[1] * 100 + Math.sin(angle - 0.7) * 50);
+  c1.lineTo(xs2 = camera[0] * 100 + Math.cos(angle + 0.7) * 50, ys2 = camera[1] * 100 + Math.sin(angle + 0.7) * 50);
   
-  //console.log(rays);
-  for(i in rays){
+  // Screen's line equation: y = as * x + bs
+  // as: director coefficient
+  as = (ys2 - ys1) / (xs2 - xs1);
   
-    c1.moveTo(x1 = camera[0] * 100, y1 = camera[1] * 100);
-    c1.lineTo(x2 = camera[0] * 100 + rays[i][0], y2 = camera[1] * 100 + rays[i][1]);
+  // bs: y at the origin
+  bs = ys1 - as * xs1;
+  
+  for(i = angle - 0.7; i < angle + 0.7; i += 1.4 / 60, column++){
     
-    /*
     // Draw
     c1.moveTo(x1 = camera[0] * 100, y1 = camera[1] * 100);
     c1.lineTo(x2 = camera[0] * 100 + Math.cos(i) * 1000, y2 = camera[1] * 100 + Math.sin(i) * 1000);
@@ -211,14 +172,16 @@ render = () => {
       // Draw column in 3D view according to the distance from camera to green square minus distance between camera and screen
       c2.fillStyle = "black";
       dist = Math.hypot(intersections[0][0] - x1, intersections[0][1] - y1) - Math.hypot(xi - x1, yi - y1);
+      
+      // Fix fisheye effect by multiplying the distance with cos(ray_angle - main_angle)
+      dist *= Math.cos(i - angle);
       c2.fillRect(
         column * 10,
         column_top = 200 - 10000 / dist,
-        20,
+        5,
         400 - 2 * column_top);
       
     }
-    */
   }
   c1.stroke();
   c1.closePath();
