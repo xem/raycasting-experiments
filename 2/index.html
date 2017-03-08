@@ -101,7 +101,7 @@ render = () => {
   // bs: y at the origin
   bs = ys1 - as * xs1;
   
-  for(i = angle - 0.7; i < angle + 0.7; i += 1.4 / 60, column++){
+  for(i = angle - 0.5; i < angle + 0.5; i += 1 / 60, column++){
     
     // Draw
     c1.moveTo(x1 = camera[0] * 100, y1 = camera[1] * 100);
