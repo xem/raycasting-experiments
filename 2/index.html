@@ -90,17 +90,6 @@ render = () => {
   c1.beginPath();
   column = 0;
   
-  // Draw a screen in front of the camera
-  c1.moveTo(xs1 = camera[0] * 100 + Math.cos(angle - 0.5) * 10, ys1 = camera[1] * 100 + Math.sin(angle - 0.5) * 10);
-  c1.lineTo(xs2 = camera[0] * 100 + Math.cos(angle + 0.5) * 10, ys2 = camera[1] * 100 + Math.sin(angle + 0.5) * 10);
-  
-  // Screen's line equation: y = as * x + bs
-  // as: director coefficient
-  as = (ys2 - ys1) / (xs2 - xs1);
-  
-  // bs: y at the origin
-  bs = ys1 - as * xs1;
-  
   for(i = angle - 0.5; i < angle + 0.5; i += 1 / 100, column++){
     
     // Draw
@@ -113,18 +102,6 @@ render = () => {
     
     // b: y at the origin
     b = y1 - a * x1;
-    
-    // Intersection between ray and screen
-    // yi = as * xi + bs
-    // yi = a * xi + b
-    // => as * xi + bs = a * xi + b
-    // => as * xi - a * xi = b - bs 
-    // => (as - a) * xi = b - bs
-    // => xi = (b - bs) / (as - a);
-    xi = (b - bs) / (as - a);
-    
-    // To find yi, just place xi in one of the two equations
-    yi = as * xi + bs;
     
     // Intersections between rays and walls
     intersections = [];
@@ -171,7 +148,7 @@ render = () => {
       
       // Draw column in 3D view according to the distance from camera to green square minus distance between camera and screen
       c2.fillStyle = "black";
-      dist = Math.hypot(intersections[0][0] - x1, intersections[0][1] - y1) - Math.hypot(xi - x1, yi - y1);
+      dist = Math.hypot(intersections[0][0] - x1, intersections[0][1] - y1);
       
       // Fix fisheye effect by multiplying the distance with cos(ray_angle - main_angle)
       dist *= Math.cos(i - angle);
@@ -180,7 +157,6 @@ render = () => {
         column_top = 200 - 20000 / dist,
         8,
         400 - 2 * column_top);
-      
     }
   }
   c1.stroke();
