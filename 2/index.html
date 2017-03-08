@@ -8,7 +8,7 @@ Top view (move camera with mouse, rotate camera with click & drag)
 
 3D view
 <br>
-<canvas width=600 height=400 id=a2></canvas>
+<canvas width=800 height=400 id=a2></canvas>
 <br>
 
 <script>
@@ -71,17 +71,17 @@ render = () => {
 
   // Grid
   c2.beginPath();
-  for(i = 0; i <= 120; i++){
-    c2.moveTo(i * 5, 0);
-    c2.lineTo(i * 5, 500);
+  for(i = 0; i <= 100; i++){
+    c2.moveTo(i * 8, 0);
+    c2.lineTo(i * 8, 500);
   }
   
   c2.moveTo(0, 200);
-  c2.lineTo(600, 200);
+  c2.lineTo(800, 200);
   c2.moveTo(0, 0);
-  c2.lineTo(600, 0);
+  c2.lineTo(800, 0);
   c2.moveTo(0, 400);
-  c2.lineTo(600, 400);
+  c2.lineTo(800, 400);
   c2.stroke();
   c2.closePath();
 
@@ -101,7 +101,7 @@ render = () => {
   // bs: y at the origin
   bs = ys1 - as * xs1;
   
-  for(i = angle - 0.5; i < angle + 0.5; i += 1 / 60, column++){
+  for(i = angle - 0.5; i < angle + 0.5; i += 1 / 100, column++){
     
     // Draw
     c1.moveTo(x1 = camera[0] * 100, y1 = camera[1] * 100);
@@ -176,9 +176,9 @@ render = () => {
       // Fix fisheye effect by multiplying the distance with cos(ray_angle - main_angle)
       dist *= Math.cos(i - angle);
       c2.fillRect(
-        column * 10,
-        column_top = 200 - 10000 / dist,
-        10,
+        column * 8,
+        column_top = 200 - 20000 / dist,
+        8,
         400 - 2 * column_top);
       
     }
