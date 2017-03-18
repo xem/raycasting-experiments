@@ -243,7 +243,7 @@ render = () => {
       c2.fillStyle = "black";
       dist = Math.hypot(hit_x - camera_x, hit_y - camera_y);
       
-      // Fix fisheye effect by multiplying the distance with cos(ray_angle - main_angle)
+      // Fix fishbowl effect by multiplying the distance with cos(ray_angle - main_angle)
       dist *= Math.cos(i - angle);
       c2.fillRect(
         column * 8,
