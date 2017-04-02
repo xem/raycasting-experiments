@@ -1,0 +1,269 @@
+<!doctype html>
+<meta charset=utf-8>
+
+<h3>Move with arrow keys / WASD / ZQSD</h3>
+<div style="float:left; margin: 0 10px 0 0">
+  Top view
+  <br>
+  <canvas width=600 height=500 id=a1></canvas>
+</div>
+
+<div>
+  3D view
+  <br>
+  <canvas width=800 height=400 id=a2></canvas>
+</div>
+
+<br>
+
+<script>
+// Canvas contexts
+c1 = a1.getContext("2d");
+c2 = a2.getContext("2d");
+
+// Map
+// Numbers > 0 represent walls of different colors
+map = [
+  [0,0,0,0,0,0],
+  [0,0,1,0,2,0],
+  [0,3,0,0,0,0],
+  [0,0,0,4,0,6],
+  [0,0,0,0,0,0]
+];
+
+// Camera position (in px)
+camera = [150, 450];
+
+// Camera angle (in rad)
+angle = -1;
+
+// Render both canvas
+render = () => {
+
+  // Reset canvas
+  a1.width ^= 0;
+  a2.width ^= 0;
+  
+  // TOP VIEW
+  // --------
+
+  // Grid
+  c1.beginPath();
+  for(i = 0; i <= 600; i+= 100){
+    c1.moveTo(i, 0);
+    c1.lineTo(i, 500);
+  }
+  for(i = 0; i <= 500; i+= 100){
+    c1.moveTo(0, i);
+    c1.lineTo(600, i);
+  }
+  c1.stroke();
+  c1.closePath();
+
+  // Walls
+  for(i in map){
+    for(j in map[i]){
+      if(wall = map[i][j]){
+        // Compute color
+        c1.fillStyle = "hsl("+wall*50+",50%,40%)";
+        c1.fillRect(j * 100, i * 100, 100, 100);
+      }
+    }
+  }
+
+  // Camera
+  c1.beginPath();
+  c1.arc(camera[0], camera[1], 5, 0, 7);
+  c1.fill();
+  c1.closePath();
+
+  // 3D VIEW
+  // -------
+
+  c2.fillStyle = "#cdf";
+  c2.fillRect(0, 0, 800, 200);
+  c2.fillStyle = "green";
+  c2.fillRect(0, 200, 800, 400); 
+
+
+
+  // RAYCASTING
+  // ----------
+
+  c1.beginPath();
+  column = 0;
+  
+  // For 100 rays between (angle - 0.5) and (angle + 0.5)
+  // Comment this line and uncomment the next to cast only one ray
+  for(i = angle - 0.5; i < angle + 0.5; i += 1 / 400, column++)
+  //i=angle;
+  {
+    // Start from camera position
+    camera_x = camera[0];
+    camera_y = camera[1];
+    
+    // Ray direction (arbitrarily 1000px away from camera)
+    ray_dir_x = camera[0] + Math.cos(i) * 1000;
+    ray_dir_y = camera[1] + Math.sin(i) * 1000;
+    
+    // Ray's line equation: y = a * x + b
+    // a: director coefficient
+    a = (ray_dir_y - camera_y) / (ray_dir_x - camera_x);
+    
+    // b: y at the origin
+    b = camera_y - a * camera_x;
+    
+    // Check if the current ray is going up or down, left or right
+    ray_going_left = !(ray_going_right = ray_dir_x > camera_x);
+    ray_going_up = !(ray_going_down = ray_dir_y > camera_y);
+    
+    ray_dist = 0;
+    ray_hit = false;
+    current_x = camera_x;
+    current_y = camera_y;
+    next_L = null;
+    next_C = null;
+    hit_x = ray_dir_x;
+    hit_y = ray_dir_y;
+    wall = 0;
+    side = null;
+    
+    // Cast current ray until it hits something or gets longer than 1000px
+    while(!ray_hit && ray_dist < 1000){
+    
+      // At first iteration, find closest line and column
+      if(ray_dist == 0){
+      
+        // Find next column (x = C)
+        if(ray_going_left){
+          C = Math.floor(current_x / 100) * 100;
+        }
+        else if(ray_going_right){
+          C = Math.ceil(current_x / 100) * 100;
+        }
+        
+        // Find next line (y = L)
+        if(ray_going_up){
+          L = Math.floor(current_y / 100) * 100;
+        }
+        else if(ray_going_down){
+          L = Math.ceil(current_y / 100) * 100;
+        }
+      }
+      
+      // During the next iterations, just deduce them from the last grid collision and angle direction
+      else {
+        L = next_L;
+        C = next_C;
+      }
+      
+      // Find intersection with column C
+      xc = C;
+      yc = a * xc + b;
+      
+      // Find intersection with line L
+      xl = (L - b) / a;
+      yl = L;
+      
+      dist_C = Math.hypot(xc - current_x, yc - current_y);
+      dist_L = Math.hypot(xl - current_x, yl - current_y);
+      
+      // If next column is closer
+      if(dist_C < dist_L){
+      
+        // Save distance
+        ray_dist = dist_C;
+        
+        // Check if the ray hits a wall
+        if(ray_going_left && map[Math.floor(yc/100)] && (wall = map[Math.floor(yc/100)][Math.floor(C/100)-1])){
+          ray_hit = true;
+          hit_x = xc;
+          hit_y = yc;
+          side = 1;
+        }
+        
+        else if(ray_going_right && map[~~(yc/100)] && (wall = map[~~(yc/100)][~~(C/100)])){
+          ray_hit = true;
+          hit_x = xc;
+          hit_y = yc;
+          side = 3;
+        }
+        
+        // Else, set next line and column to check
+        else
+        {
+          next_L = L;
+          if(ray_going_left) next_C = C - 100;
+          else next_C = C + 100;
+        }
+      }
+      
+      // If next line is closer
+      else {
+        
+        // Save distance
+        ray_dist = dist_L;
+        
+        // Check if the ray hits a wall
+        if(ray_going_up && map[~~(L/100)-1] && (wall = map[~~(L/100)-1][~~(xl/100)])){
+          ray_hit = true;
+          hit_x = xl;
+          hit_y = yl;
+          side = 0;
+        }
+        
+        else if(ray_going_down && map[~~(L/100)] && (wall = map[~~(L/100)][~~(xl/100)])){
+          ray_hit = true;
+          hit_x = xl;
+          hit_y = yl;
+          side = 4;
+        }
+        
+        // Else, set next line and column to check
+        else
+        {
+          next_C = C;
+          if(ray_going_up) next_L = L - 100;
+          else next_L = L + 100;
+        }
+      }
+    }
+
+    c1.moveTo(camera_x, camera_y);
+    c1.lineTo(hit_x, hit_y);
+
+    if(ray_hit){
+    
+      // Compute color
+      c2.fillStyle = "hsl("+wall*50+",40%," + (40 + side * 5) + "%)";
+      
+      // Draw column in 3D view according to the distance from camera to wall
+      dist = Math.hypot(hit_x - camera_x, hit_y - camera_y);
+      
+      // Fix fishbowl effect by multiplying the distance with cos(ray_angle - main_angle)
+      dist *= Math.cos(i - angle);
+      c2.fillRect(
+        column * 2,
+        column_top = 200 - 30000 / dist,
+        2,
+        400 - 2 * column_top);
+    }
+    
+  }
+  c1.stroke();
+  c1.closePath();
+}
+
+// Keyboard input
+u = d = l = r = 0;
+onkeydown = e => this['lurdl*d*l*ur*u'[(e.which + 3) % 20]] = 1;
+onkeyup = e => this['lurdl*d*l*ur*u'[(e.which + 3) % 20]] = 0;     
+ 
+// Game loop: move, turn and render
+setInterval(() => {
+  angle -= (l - r) / 20;
+  camera = [camera[0] -= (d - u) * 9 * Math.cos(angle), camera[1] -= (d - u) * 9 * Math.sin(angle)];
+  render();
+}, 33);
+
+</script>
